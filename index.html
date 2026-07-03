@@ -3,202 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>오늘의 유치원 급식 알리미</title>
+    <title>삼성초등학교병설유치원 급식 알리미</title>
     <style>
         body {
             font-family: 'Malgun Gothic', sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f5f7fa;
-            text-align: center;
+            padding: 15px;
+            background-color: #f0f4f8;
             color: #333;
+            text-align: center;
         }
         .container {
-            max-width: 500px;
+            max-width: 480px;
             margin: 0 auto;
             background: #ffffff;
             padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .header {
+            background-color: #e3f2fd;
+            padding: 15px;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        h1 {
-            font-size: 1.5rem;
-            color: #4A90E2;
-            margin-bottom: 5px;
-        }
-        .date-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #666;
             margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 1.35rem;
+            color: #1e88e5;
+            margin: 0 0 5px 0;
+            word-break: keep-all;
+        }
+        .date-badge {
+            display: inline-block;
+            background-color: #1e88e5;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+        
+        /* 메인 버튼 메뉴 스타일 */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .menu-btn:active {
+            background-color: #f5f5f5;
+            transform: scale(0.98);
+            border-color: #1e88e5;
+        }
+        .menu-btn .icon {
+            font-size: 1.6rem;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+        }
+
+        /* 급식 사진 모달/섹션 스타일 */
+        .section-box {
+            display: none;
+            background: #ffffff;
+            border: 2px solid #1e88e5;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: left;
+            animation: fadeIn 0.3s ease;
+        }
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #1e88e5;
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
         }
         .meal-img-box {
             width: 100%;
-            min-height: 250px;
-            background-color: #e9ecef;
+            min-height: 200px;
+            background-color: #f5f5f5;
             border-radius: 10px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .meal-img-box img {
             width: 100%;
             height: auto;
-            display: block;
         }
-        .menu-list {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: left;
-            font-size: 1.1rem;
-            line-height: 1.8;
-            border-left: 5px solid #4A90E2;
+        .menu-text-box {
+            background-color: #fafafa;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            line-height: 1.6;
+            border-left: 4px solid #1e88e5;
         }
         .loading {
-            font-size: 1.1rem;
-            color: #888;
-            padding: 40px 10px;
-            line-height: 1.6;
+            font-size: 1rem;
+            color: #757575;
+            text-align: center;
+            padding: 30px 0;
+            width: 100%;
         }
-        .error {
-            color: #d9534f;
-            font-weight: bold;
-        }
-        .btn-link {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background-color: #4A90E2;
+        .btn-close {
+            display: block;
+            text-align: center;
+            background-color: #757575;
             color: white;
+            padding: 8px;
+            border-radius: 8px;
             text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🍱 오늘의 급식 사진</h1>
-    <div class="date-title" id="today-date">날짜 계산 중...</div>
-
-    <div class="meal-img-box" id="img-container">
-        <div class="loading" id="status-text">급식 정보를 불러오는 중입니다...</div>
+    <!-- 헤더 정보 -->
+    <div class="header">
+        <h1>📱 삼성초등학교병설유치원 급식</h1>
+        <div class="date-badge" id="today-date">날짜 계산 중...</div>
     </div>
 
-    <div class="menu-list" id="menu-container" style="display: none;"></div>
+    <!-- 5단 메뉴 버튼 Grid -->
+    <div class="menu-grid">
+        <!-- 1. 오늘의 급식 사진 보기 (클릭 시 화면 아래에 바로 펼쳐짐) -->
+        <a href="#lunch-section" class="menu-btn" onclick="loadTodayMeal();">
+            <span class="icon">🍚</span> 오늘의 급식사진 보기
+        </a>
+        
+        <!-- 2. 이번 주 식단 보기 (학교 홈페이지 주간식단 메뉴 모바일 버전 원터치 이동) -->
+        <a href="https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769&viewType=sub" class="menu-btn" target="_blank">
+            <span class="icon">📅</span> 이번 주 식단 보기
+        </a>
+        
+        <!-- 3. 급식 안내 (학교 급식실 소식 게시판으로 이동) -->
+        <a href="https://samsung-e.goeay.kr/samsung-e/ad/fm/foodnews/selectFoodNewsList.do?mi=6770" class="menu-btn" target="_blank">
+            <span class="icon">📢</span> 급식 안내 (급식소식)
+        </a>
+        
+        <!-- 4. 알레르기 정보 (클릭 시 하단에 안내 팝업) -->
+        <a href="#allergy-section" class="menu-btn" onclick="toggleSection('allergy-section');">
+            <span class="icon">💚</span> 알레르기 정보 보기
+        </a>
+    </div>
+
+    <!-- [섹션 1] 오늘의 급식 사진 / 식단 내용 표시 구역 -->
+    <div id="lunch-section" class="section-box">
+        <div class="section-title">🍚 오늘의 급식 정보</div>
+        <div class="meal-img-box" id="img-container">
+            <div class="loading">정보를 받아오는 중...</div>
+        </div>
+        <div class="menu-text-box" id="menu-container">식단 메뉴를 불러오는 중입니다...</div>
+        <a href="#" class="btn-close" onclick="document.getElementById('lunch-section').style.display='none';">닫기 ▲</a>
+    </div>
+
+    <!-- [섹션 2] 알레르기 정보 표시 구역 -->
+    <div id="allergy-section" class="section-box">
+        <div class="section-title">💚 알레르기 유발 식품 표시 (번호)</div>
+        <div class="menu-text-box" style="font-size: 0.95rem; border-left-color: #4caf50;">
+            1.난류 2.우유 3.메밀 4.땅콩 5.대두 6.밀 7.고등어 8.게 9.새우 10.돼지고기 11.복숭아 12.토마토 13.아황산류 14.호두 15.닭고기 16.쇠고기 17.오징어 18.조개류(굴,전복,홍합 포함) 19.잣
+            <br><br>
+            <span style="color:#d9534f;">※ 식단표 메뉴 이름 옆에 적힌 숫자는 해당 알레르기 유발 식품이 포함되어 있음을 의미합니다.</span>
+        </div>
+        <a href="#" class="btn-close" onclick="document.getElementById('allergy-section').style.display='none';">닫기 ▲</a>
+    </div>
 </div>
 
 <script>
-    // 1. 한국 시간 기준으로 오늘 날짜 정확하게 구하기
+    // 날짜 연동
     const offset = new Date().getTimezoneOffset() * 60000;
     const today = new Date(Date.now() - offset);
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     
-    // 포맷 두 가지 준비 (2026-07-03 형태 / 2026.07.03 형태)
     const todayStr1 = `${year}-${month}-${day}`;
     const todayStr2 = `${year}.${month}.${day}`;
     
     document.getElementById('today-date').innerText = `${year}년 ${month}월 ${day}일`;
 
-    const targetUrl = "https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769";
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-
-    fetch(proxyUrl)
-        .then(response => {
-            if (response.ok) return response.json();
-            throw new Error('네트워크 문제');
-        })
-        .then(data => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data.contents, 'text/html');
-            
-            // 모든 td 칸을 다 훑으며 오늘 날짜가 적힌 칸 찾기
-            const tds = doc.querySelectorAll('table tbody td, table tbody th');
-            let targetTd = null;
-            
-            tds.forEach(td => {
-                const txt = td.textContent.replace(/\s+/g, ''); // 공백 제거 후 비교
-                if(txt.includes(todayStr1) || txt.includes(todayStr2) || txt.includes(`${parseInt(month)}월${parseInt(day)}일`)) {
-                    targetTd = td;
-                }
-            });
-
-            // 주간 식단표 요일 기반 대안 탐색
-            if (!targetTd) {
-                const dayIdx = new Date().getDay(); // 0:일, 1:월 ... 5:금, 6:토
-                if (dayIdx >= 1 && dayIdx <= 5) { // 평일이면 요일 칸 매칭 시도
-                    const weekTds = doc.querySelectorAll('table tbody td');
-                    if(weekTds.length >= dayIdx) {
-                        targetTd = weekTds[dayIdx - 1]; 
-                    }
-                }
-            }
-
-            if (targetTd) {
-                // 식단 텍스트 정리
-                let menuHtml = targetTd.innerHTML
-                    .replace(/<span class="btn_s">.*?<\/span>/g, '')
-                    .replace(/상세보기/g, '')
-                    .replace(/<br\s*\/?>/gi, '<br>')
-                    .trim();
-                
-                // 이미지 태그 찾기
-                let imgTag = targetTd.querySelector('img');
-                let imgUrl = imgTag ? imgTag.src : "";
-                
-                if(imgUrl && !imgUrl.startsWith('http')) {
-                    if(imgUrl.startsWith('/')) {
-                        imgUrl = "https://samsung-e.goeay.kr" + imgUrl;
-                    } else {
-                        imgUrl = "https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/" + imgUrl;
-                    }
-                }
-
-                const imgContainer = document.getElementById('img-container');
-                if(imgUrl && !imgUrl.includes('no_image')) {
-                    imgContainer.innerHTML = `<img src="${imgUrl}" alt="오늘의 급식 사진" onerror="showNoImgMessage();">`;
-                } else {
-                    showNoImgMessage();
-                }
-
-                const menuContainer = document.getElementById('menu-container');
-                menuContainer.innerHTML = `<strong>오늘의 메뉴:</strong><br>${menuHtml}`;
-                menuContainer.style.display = "block";
-                
-            } else {
-                showWeekendMessage();
-            }
-        })
-        .catch(error => {
-            console.error(error);
-            document.getElementById('img-container').innerHTML = `
-                <div class="loading">
-                    <span class="error">학교 서버 연결이 일시적으로 원활하지 않습니다.</span><br><br>
-                    아래 버튼을 누르면 학교 급식 게시판으로 바로 이동합니다.<br>
-                    <a href="${targetUrl}&viewType=sub" class="btn-link" target="_blank">급식 게시판 바로가기</a>
-                </div>`;
-        });
-
-    function showNoImgMessage() {
-        document.getElementById('img-container').innerHTML = `
-            <div class="loading">
-                📸 오늘 자 급식 사진이 아직 업로드되지 않았습니다.<br>
-                (식단 메뉴는 아래에서 확인할 수 있습니다.)
-            </div>`;
+    function toggleSection(id) {
+        // 모든 섹션 숨기기 후 선택한 섹션만 토글
+        document.getElementById('lunch-section').style.display = 'none';
+        document.getElementById('allergy-section').style.display = 'none';
+        document.getElementById(id).style.display = 'block';
     }
 
-    function showWeekendMessage() {
-        document.getElementById('img-container').innerHTML = `
-            <div class="loading">
-                <span class='error'>오늘 등록된 급식 정보가 없습니다.</span><br>
-                주말, 공휴일이거나 방학 기간일 수 있습니다. 😴
-            </div>`;
+    function loadTodayMeal() {
+        toggleSection('lunch-section');
+        
+        const targetUrl = "https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769";
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+        fetch(proxyUrl)
+            .then(res => res.json())
+            .then(data => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data.contents, 'text/html');
+                const tds = doc.querySelectorAll('table tbody td, table tbody th');
+                let targetTd = null;
+
+                tds.forEach(td => {
+                    const txt = td.textContent.replace(/\s+/g, '');
+                    if(txt.includes(todayStr1) || txt.includes(todayStr2) || txt.includes(`${parseInt(month)}월${parseInt(day)}일`)) {
+                        targetTd = td;
+                    }
+                });
+
+                // 주간식단 대안 탐색
+                if (!targetTd) {
+                    const dayIdx = new Date().getDay();
+                    if (dayIdx >= 1 && dayIdx <= 5) {
+                        const weekTds = doc.querySelectorAll('table tbody td');
+                        if(weekTds.length >= dayIdx) targetTd = weekTds[dayIdx - 1];
+                    }
+                }
+
+                if (targetTd) {
+                    let menuHtml = targetTd.innerHTML
+                        .replace(/<span class="btn_s">.*?<\/span>/g, '')
+                        .replace(/상세보기/g, '')
+                        .replace(/<br\s*\/?>/gi, '<br>').trim();
+
+                    let imgTag = targetTd.querySelector('img');
+                    let imgUrl = imgTag ? imgTag.src : "";
+
+                    if(imgUrl && !imgUrl.startsWith('http')) {
+                        imgUrl = "https://samsung-e.goeay.kr" + (imgUrl.startsWith('/') ? imgUrl : "/samsung-e/ad/fm/foodmenu/" + imgUrl);
+                    }
+
+                    if(imgUrl && !imgUrl.includes('no_image')) {
+                        document.getElementById('img-container').innerHTML = `<img src="${imgUrl}" alt="급식 사진">`;
+                    } else {
+                        document.getElementById('img-container').innerHTML = `<div class="loading">📸 오늘 급식 사진이 아직 업로드되지 않았습니다.</div>`;
+                    }
+                    document.getElementById('menu-container').innerHTML = `<strong>오늘의 식단:</strong><br>${menuHtml}`;
+                } else {
+                    document.getElementById('img-container').innerHTML = `<div class="loading">😴 오늘은 급식 정보가 없는 날입니다. (주말/공휴일)</div>`;
+                    document.getElementById('menu-container').innerHTML = `식단 정보가 없습니다.`;
+                }
+            })
+            .catch(() => {
+                document.getElementById('img-container').innerHTML = `<div class="loading">⚠️ 정보를 가져오지 못했습니다. 학교 홈페이지를 확인해 주세요.</div>`;
+            });
     }
 </script>
 
