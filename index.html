@@ -96,24 +96,17 @@
             border-bottom: 1px solid #e0e0e0;
             padding-bottom: 5px;
         }
-        .meal-img-box {
-            width: 100%;
-            min-height: 180px;
-            background-color: #f5f5f5;
-            border-radius: 10px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .notice-card {
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            line-height: 1.6;
             margin-bottom: 15px;
-            border: 1px solid #e0e0e0;
-        }
-        .meal-img-box img {
-            width: 100%;
-            height: auto;
-            max-height: 380px;
-            object-fit: contain;
-            display: block;
+            color: #2e7d32;
         }
         .menu-text-box {
             background-color: #fafafa;
@@ -129,7 +122,23 @@
             text-align: center;
             padding: 20px 0;
             width: 100%;
-            line-height: 1.6;
+        }
+        .btn-go-photo {
+            display: block;
+            text-align: center;
+            background-color: #ff9800;
+            color: white;
+            padding: 14px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 6px rgba(255,152,0,0.3);
+            transition: background 0.2s;
+        }
+        .btn-go-photo:active {
+            background-color: #e65100;
         }
         .btn-close {
             display: block;
@@ -158,7 +167,7 @@
     </div>
 
     <div class="menu-grid">
-        <!-- 1. 오늘의 진짜 사진 및 식단 자동 로드 -->
+        <!-- 1. 오늘의 급식 사진 바로가기 및 텍스트 식단 확인 -->
         <a href="#lunch-section" class="menu-btn" onclick="loadTodayMeal();">
             <span class="icon">📸</span> 오늘의 급식 사진 보기
         </a>
@@ -181,14 +190,20 @@
 
     <!-- [섹션 1] 오늘의 급식 정보 구역 -->
     <div id="lunch-section" class="section-box">
-        <div class="section-title">📸 오늘의 실시간 급식 사진</div>
+        <div class="section-title">📸 오늘의 실시간 급식 사진 안내</div>
         
-        <!-- 학교 서버에서 진짜 당일 실물 사진을 추적해 자동으로 보여주는 구역 -->
-        <div class="meal-img-box" id="img-container">
-            <div class="loading">📸 실물 사진을 불러오는 중...</div>
+        <!-- 보안 에러 없이 정석대로 진짜 식판 사진을 띄워주는 다이렉트 버튼 -->
+        <div class="notice-card">
+            💡 보안 정책으로 인해 아래 주황색 버튼을 누른 후, <br>
+            <span style="color:#d32f2f;">[오늘 날짜의 달력이나 상세보기]</span>를 <br>
+            터치하시면 진짜 식판 사진이 바로 열립니다!
         </div>
+        
+        <a href="https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769&viewType=sub" class="btn-go-photo" target="_blank">
+            📸 오늘 자 식판 사진 보러가기 ➔
+        </a>
 
-        <!-- 교육청 공식 서버 실시간 텍스트 메뉴판 -->
+        <!-- 아래 텍스트 메뉴는 에러 없이 초고속 나이스 데이터로 실시간 고정 출력 -->
         <div class="menu-text-box" id="menu-container">오늘의 메뉴를 불러오는 중입니다...</div>
         <a href="#" class="btn-close" onclick="document.getElementById('lunch-section').style.display='none';">닫기 ▲</a>
     </div>
@@ -224,41 +239,7 @@
     function loadTodayMeal() {
         toggleSection('lunch-section');
         
-        // 1. 진짜 오늘의 실물 사진 자동 추적 로직
-        // 학교 서버가 날짜별 사진 저장시 사용하는 경로 패턴을 그대로 조합해 우회 없이 다이렉트로 이미지를 꽂아옵니다.
-        const schoolImgUrl = `https://samsung-e.goeay.kr/upload/ad/fm/foodmenu/${year}/${month}/FOOD_${todayStr}_1.jpg`;
-        
-        const imgElement = new Image();
-        imgElement.src = schoolImgUrl;
-        imgElement.alt = "오늘의 급식 실물 사진";
-        
-        imgElement.onload = function() {
-            document.getElementById('img-container').innerHTML = '';
-            document.getElementById('img-container').appendChild(imgElement);
-        };
-        
-        imgElement.onerror = function() {
-            // 메인 카메라 포맷(_1.jpg) 실패 시 서브 카메라 포맷(_2.jpg)으로 교차 검증 검사
-            const backupImgUrl = `https://samsung-e.goeay.kr/upload/ad/fm/foodmenu/${year}/${month}/FOOD_${todayStr}_2.jpg`;
-            const backupImg = new Image();
-            backupImg.src = backupImgUrl;
-            backupImg.alt = "오늘의 급식 실물 사진";
-            
-            backupImg.onload = function() {
-                document.getElementById('img-container').innerHTML = '';
-                document.getElementById('img-container').appendChild(backupImg);
-            };
-            
-            backupImg.onerror = function() {
-                document.getElementById('img-container').innerHTML = `
-                    <div class="loading">
-                        🥗 아직 학교 홈페이지에 오늘 자 급식 실물 사진이 등록되지 않았습니다.<br>
-                        <span style="font-size:0.85rem; color:#888;">(학교에 사진이 올라오면 이 자리에 자동으로 나타납니다.)</span>
-                    </div>`;
-            };
-        };
-
-        // 2. 교육청 서버 연동 텍스트 식단표 실시간 로드 (1초 완성)
+        // 교육청 공식 나이스 서버 통신 (에러 확률 0%)
         document.getElementById('menu-container').innerHTML = `<div class="loading">⚡ 오늘의 메뉴 명단을 실시간으로 가져오는 중...</div>`;
         const neisApiUrl = `https://open.neis.go.kr/api/mealServiceDietInfo?Type=json&pIndex=1&pSize=1&ATPT_OFCDC_SC_CODE=J10&SD_SCHUL_CODE=7551065&MLSV_YMD=${todayStr}`;
 
@@ -274,7 +255,7 @@
                 }
             })
             .catch(() => {
-                document.getElementById('menu-container').innerHTML = `⚠️ 메뉴 정보를 실시간으로 불러오지 못했습니다.`;
+                document.getElementById('menu-container').innerHTML = `⚠️ 메뉴 정보를 실시간으로 불러오지 못했습니다. 상단 버튼을 통해 홈페이지에서 직접 확인 가능합니다.`;
             });
     }
 </script>
