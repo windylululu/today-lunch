@@ -96,29 +96,23 @@
             border-bottom: 1px solid #e0e0e0;
             padding-bottom: 5px;
         }
-        .meal-img-box {
-            width: 100%;
-            min-height: 200px;
-            background-color: #f5f5f5;
+        .meal-notice-box {
+            background-color: #fff9c4;
+            padding: 15px;
             border-radius: 10px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: bold;
+            line-height: 1.5;
             margin-bottom: 15px;
-        }
-        .meal-img-box img {
-            width: 100%;
-            height: auto;
-            max-height: 400px;
-            object-fit: contain;
+            border: 1px solid #fff59d;
         }
         .menu-text-box {
             background-color: #fafafa;
-            padding: 12px;
+            padding: 15px;
             border-radius: 8px;
-            font-size: 1rem;
-            line-height: 1.6;
+            font-size: 1.1rem;
+            line-height: 1.8;
             border-left: 4px solid #1e88e5;
         }
         .loading {
@@ -127,7 +121,6 @@
             text-align: center;
             padding: 20px 0;
             width: 100%;
-            line-height: 1.6;
         }
         .btn-close {
             display: block;
@@ -140,16 +133,18 @@
             margin-top: 15px;
             font-size: 0.95rem;
         }
-        .btn-fallback {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 15px;
-            background-color: #e1f5fe;
-            color: #0288d1;
+        .btn-go-school {
+            display: block;
+            text-align: center;
+            background-color: #1e88e5;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
             text-decoration: none;
-            border-radius: 5px;
-            font-size: 0.9rem;
             font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+            box-shadow: 0 2px 5px rgba(30,136,229,0.3);
         }
 
         @keyframes fadeIn {
@@ -167,18 +162,17 @@
     </div>
 
     <div class="menu-grid">
-        <!-- 1. 오늘의 급식 사진 보기 -->
+        <!-- 1. 오늘의 식단 및 사진 보기 (원터치 통합 기능) -->
         <a href="#lunch-section" class="menu-btn" onclick="loadTodayMeal();">
             <span class="icon">🍚</span> 오늘의 급식사진 보기
         </a>
         
         <!-- 2. 이번 주 식단 보기 -->
-        <a href="https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769&viewType=sub" class="menu-blank" target="_blank" class="menu-btn" style="display:none;"></a>
         <a href="https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769&viewType=sub" class="menu-btn" target="_blank">
             <span class="icon">📅</span> 이번 주 식단 보기
         </a>
         
-        <!-- 3. 급식 안내 (급식실 소식 게시판 mi=6771 변경 완료) -->
+        <!-- 3. 급식 안내 (급식실 소식 연동) -->
         <a href="https://samsung-e.goeay.kr/samsung-e/ad/fm/foodnews/selectFoodNewsList.do?mi=6771&viewType=sub" class="menu-btn" target="_blank">
             <span class="icon">📢</span> 급식 안내 (급식실 소식)
         </a>
@@ -189,17 +183,25 @@
         </a>
     </div>
 
-    <!-- [섹션 1] 오늘의 급식 정보 -->
+    <!-- [섹션 1] 오늘의 급식 정보 구역 -->
     <div id="lunch-section" class="section-box">
         <div class="section-title">🍚 오늘의 급식 정보</div>
-        <div class="meal-img-box" id="img-container">
-            <div class="loading">정보를 받아오는 중...</div>
+        
+        <!-- 학부모 편의를 위한 팝업 다이렉트 링크 버튼 -->
+        <div class="meal-notice-box">
+            📌 학교 정책상 상세 사진은 아래 버튼을 누른 뒤 <br>
+            <span style="color:#d32f2f;">[오늘 날짜의 상세보기]</span>를 터치하면 바로 보입니다!
         </div>
+        <a href="https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769&viewType=sub" class="btn-go-school" target="_blank">
+            📸 오늘의 급식 사진 보러가기 ➔
+        </a>
+
+        <!-- 지저분한 깨짐을 완전히 제거한 맑은 텍스트 식단표 -->
         <div class="menu-text-box" id="menu-container">식단 메뉴를 불러오는 중입니다...</div>
         <a href="#" class="btn-close" onclick="document.getElementById('lunch-section').style.display='none';">닫기 ▲</a>
     </div>
 
-    <!-- [섹션 2] 알레르기 정보 -->
+    <!-- [섹션 2] 알레르기 정보 구역 -->
     <div id="allergy-section" class="section-box">
         <div class="section-title">💚 알레르기 유발 식품 표시</div>
         <div class="menu-text-box" style="font-size: 0.95rem; border-left-color: #4caf50;">
@@ -212,7 +214,6 @@
 </div>
 
 <script>
-    // 한국 시간 기준 오늘 날짜 구하기
     const offset = new Date().getTimezoneOffset() * 60000;
     const today = new Date(Date.now() - offset);
     const year = today.getFullYear();
@@ -234,21 +235,16 @@
 
     function loadTodayMeal() {
         toggleSection('lunch-section');
-        document.getElementById('img-container').innerHTML = `<div class="loading">🔄 학교 서버에서 최신 급식 데이터를 가져오는 중입니다...</div>`;
-        document.getElementById('menu-container').innerHTML = `불러오는 중...`;
+        document.getElementById('menu-container').innerHTML = `<div class="loading">🔄 오늘의 메뉴 명단을 정제하여 가져오는 중...</div>`;
         
-        // 캐시 방지를 위해 랜덤 타임스탬프 추가 및 예비 프록시 적용
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&_=${new Date().getTime()}`;
 
         fetch(proxyUrl)
-            .then(res => {
-                if (!res.ok) throw new Error();
-                return res.json();
-            })
+            .then(res => res.json())
             .then(data => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(data.contents, 'text/html');
-                const tds = doc.querySelectorAll('table tbody td, table tbody th');
+                const tds = doc.querySelectorAll('table tbody td');
                 let targetTd = null;
 
                 tds.forEach(td => {
@@ -258,7 +254,6 @@
                     }
                 });
 
-                // 주간식단 인덱스 매칭 보완
                 if (!targetTd) {
                     const dayIdx = new Date().getDay();
                     if (dayIdx >= 1 && dayIdx <= 5) {
@@ -268,55 +263,28 @@
                 }
 
                 if (targetTd) {
-                    // 이미지 처리 로직 완전 개편: 깨진 이미지 텍스트 제거 및 정확한 src 수집
-                    let imgTag = targetTd.querySelector('img');
-                    let imgUrl = "";
+                    // HTML 태그를 아예 제외하고 순수 텍스트만 추출하여 깨진 아이콘 원천 차단
+                    let rawText = targetTd.textContent;
                     
-                    if (imgTag) {
-                        // 이미지의 실제 src 경로 추출
-                        const srcAttr = imgTag.getAttribute('src');
-                        if (srcAttr && !srcAttr.includes('no_image')) {
-                            imgUrl = srcAttr.startsWith('http') ? srcAttr : "https://samsung-e.goeay.kr" + (srcAttr.startsWith('/') ? srcAttr : "/samsung-e/ad/fm/foodmenu/" + srcAttr);
-                        }
-                    }
-
-                    // 학부모 화면 가독성을 위해 지저분한 내부 소스 텍스트 가공
-                    let menuHtml = targetTd.innerHTML
-                        .replace(/<img[^>]*>/gi, '') // 이미지 태그 자체 제거 (위에 따로 띄우므로)
-                        .replace(/<span class="btn_s">.*?<\/span>/g, '')
+                    // 불필요한 시스템 텍스트 및 중복 찌꺼기 글자들 완벽 청소
+                    let cleanText = rawText
                         .replace(/상세보기/g, '')
-                        .replace(/_이미지/g, '') // 텍스트 깨짐 방지
-                        .replace(/<br\s*\/?>/gi, '<br>').trim();
+                        .replace(/_이미지/g, '')
+                        .replace(/기본 식단 이미지/g, '')
+                        .replace(/중식/g, '')
+                        .trim();
+                    
+                    // 메뉴 항목별로 줄바꿈 정렬 처리
+                    let formattedMenu = cleanText.split(/\s+/).join('<br> ');
 
-                    if(imgUrl) {
-                        document.getElementById('img-container').innerHTML = `<img src="${imgUrl}" alt="오늘의 급식 사진" onerror="showNoImgMessage();">`;
-                    } else {
-                        showNoImgMessage();
-                    }
-                    document.getElementById('menu-container').innerHTML = `<strong>오늘의 식단 메뉴:</strong><br>${menuHtml}`;
+                    document.getElementById('menu-container').innerHTML = `<strong>📋 오늘의 식단 메뉴:</strong><br><div style="margin-top:10px;">${formattedMenu}</div>`;
                 } else {
-                    showWeekendMessage();
+                    document.getElementById('menu-container').innerHTML = `😴 오늘은 급식 정보가 없는 날입니다. (주말/공휴일/방학)`;
                 }
             })
             .catch(() => {
-                // 프록시 서버 에러 발생 시 완전한 무한 대기 방지용 백업 UI 제공
-                document.getElementById('img-container').innerHTML = `
-                    <div class="loading" style="color: #d9534f; font-weight: bold;">
-                        ⚠️ 실시간 이미지 동기화에 지연이 발생했습니다.<br>
-                        <span style="color:#555; font-weight: normal;">오늘 식단은 아래 버튼을 눌러 바로 확인하실 수 있습니다.</span><br>
-                        <a href="${targetUrl}&viewType=sub" class="btn-link" target="_blank" style="display:inline-block; margin-top:10px; padding:6px 12px; background-color:#1e88e5; color:white; text-decoration:none; border-radius:5px;">원래 홈페이지에서 보기</a>
-                    </div>`;
-                document.getElementById('menu-container').innerHTML = `연결 상태가 원활하지 않아 텍스트 정보를 로드하지 못했습니다.`;
+                document.getElementById('menu-container').innerHTML = `⚠️ 실시간 메뉴 텍스트 로드에 지연이 발생했습니다. 상단의 파란색 버튼을 누르면 전체 식단표로 즉시 이동할 수 있습니다.`;
             });
-    }
-
-    function showNoImgMessage() {
-        document.getElementById('img-container').innerHTML = `<div class="loading">📸 오늘 급식 사진이 아직 홈페이지에 업로드되지 않았습니다.<br><span style="font-size:0.85rem; color:#999;">(식단표 메뉴는 아래에서 확인할 수 있습니다.)</span></div>`;
-    }
-
-    function showWeekendMessage() {
-        document.getElementById('img-container').innerHTML = `<div class="loading">😴 오늘은 급식 정보가 없는 날입니다. (주말/공휴일/방학)</div>`;
-        document.getElementById('menu-container').innerHTML = `식단 정보가 없습니다.`;
     }
 </script>
 
