@@ -60,10 +60,21 @@
         .loading {
             font-size: 1.1rem;
             color: #888;
-            padding: 50px 0;
+            padding: 40px 10px;
+            line-height: 1.6;
         }
         .error {
             color: #d9534f;
+            font-weight: bold;
+        }
+        .btn-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #4A90E2;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
             font-weight: bold;
         }
     </style>
@@ -74,90 +85,86 @@
     <h1>🍱 오늘의 급식 사진</h1>
     <div class="date-title" id="today-date">날짜 계산 중...</div>
 
-    <!-- 사진이 표시될 영역 -->
     <div class="meal-img-box" id="img-container">
         <div class="loading" id="status-text">급식 정보를 불러오는 중입니다...</div>
     </div>
 
-    <!-- 메뉴 글자가 표시될 영역 -->
-    <div class="menu-list" id="menu-container" style="display: none;">
-    </div>
+    <div class="menu-list" id="menu-container" style="display: none;"></div>
 </div>
 
 <script>
-    // 1. 오늘 날짜 구하기 (YYYY-MM-DD 형식)
-    const today = new Date();
+    // 1. 한국 시간 기준으로 오늘 날짜 정확하게 구하기
+    const offset = new Date().getTimezoneOffset() * 60000;
+    const today = new Date(Date.now() - offset);
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
+    
+    // 포맷 두 가지 준비 (2026-07-03 형태 / 2026.07.03 형태)
+    const todayStr1 = `${year}-${month}-${day}`;
+    const todayStr2 = `${year}.${month}.${day}`;
     
     document.getElementById('today-date').innerText = `${year}년 ${month}월 ${day}일`;
 
-    // 학교 급식 주소 (CORS 우회를 위해 AllOrigins 프록시 사용)
     const targetUrl = "https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769";
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
-    // 2. 학교 홈페이지 데이터 긁어오기 (원격 크롤링)
     fetch(proxyUrl)
         .then(response => {
             if (response.ok) return response.json();
-            throw new Error('네트워크 응답에 문제가 있습니다.');
+            throw new Error('네트워크 문제');
         })
         .then(data => {
-            // 받아온 HTML을 파싱하기 위함
             const parser = new DOMParser();
             const doc = parser.parseFromString(data.contents, 'text/html');
             
-            // 오늘 날짜에 해당하는 '상세보기' 링크나 식단 칸 찾기
-            // 홈페이지 구조상 날짜 th 아래 또는 해당 일자 테이블 내에서 탐색
-            const dayElements = doc.querySelectorAll('table.tbl_calendar tbody td, table.tbl_board tbody td, .tbl_excel tbody td, th');
-            
+            // 모든 td 칸을 다 훑으며 오늘 날짜가 적힌 칸 찾기
+            const tds = doc.querySelectorAll('table tbody td, table tbody th');
             let targetTd = null;
-            // 학교 사이트 내부의 오늘 날짜 텍스트 검색
-            dayElements.forEach(el => {
-                if(el.textContent.includes(todayStr)) {
-                    // 날짜가 포함된 부모 또는 인접한 td(식단칸)를 찾음
-                    targetTd = el.tagName === 'TH' ? el.nextElementSibling : el;
+            
+            tds.forEach(td => {
+                const txt = td.textContent.replace(/\s+/g, ''); // 공백 제거 후 비교
+                if(txt.includes(todayStr1) || txt.includes(todayStr2) || txt.includes(`${parseInt(month)}월${parseInt(day)}일`)) {
+                    targetTd = td;
                 }
             });
 
-            // 주간 식단표 구조인 경우 대안 탐색 (월~금 요일 매칭)
+            // 주간 식단표 요일 기반 대안 탐색
             if (!targetTd) {
-                const tds = doc.querySelectorAll('table tbody td');
-                tds.forEach(td => {
-                    if(td.textContent.includes(todayStr) || (td.id && td.id.includes(todayStr))) {
-                        targetTd = td;
+                const dayIdx = new Date().getDay(); // 0:일, 1:월 ... 5:금, 6:토
+                if (dayIdx >= 1 && dayIdx <= 5) { // 평일이면 요일 칸 매칭 시도
+                    const weekTds = doc.querySelectorAll('table tbody td');
+                    if(weekTds.length >= dayIdx) {
+                        targetTd = weekTds[dayIdx - 1]; 
                     }
-                });
+                }
             }
 
             if (targetTd) {
-                // 식단 텍스트 추출 (알레르기 정보 등 포함)
-                // 브레이크 태그(<br>)를 줄바꿈으로 변경하여 가독성 확보
+                // 식단 텍스트 정리
                 let menuHtml = targetTd.innerHTML
-                    .replace(/<span class="btn_s">.*?<\/span>/g, '') // 상세보기 버튼 글자 제거
+                    .replace(/<span class="btn_s">.*?<\/span>/g, '')
                     .replace(/상세보기/g, '')
-                    .replace(/<br\s*\/?>/gi, '<br>');
+                    .replace(/<br\s*\/?>/gi, '<br>')
+                    .trim();
                 
-                // 사진 이미지 찾기 (해당 칸 내부 혹은 고유 팝업 구조 분석 기반)
-                // 기본적으로 학교 홈페이지는상세보기 팝업 내에 이미지가 있으나, 
-                // 메인 본문 메타데이터나 규칙 이미지 주소를 파싱
+                // 이미지 태그 찾기
                 let imgTag = targetTd.querySelector('img');
                 let imgUrl = imgTag ? imgTag.src : "";
                 
-                // 만약 상대경로로 되어있다면 절대경로로 변경
                 if(imgUrl && !imgUrl.startsWith('http')) {
-                    imgUrl = "https://samsung-e.goeay.kr" + imgUrl;
+                    if(imgUrl.startsWith('/')) {
+                        imgUrl = "https://samsung-e.goeay.kr" + imgUrl;
+                    } else {
+                        imgUrl = "https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/" + imgUrl;
+                    }
                 }
 
-                // 화면에 뿌려주기
                 const imgContainer = document.getElementById('img-container');
-                if(imgUrl) {
-                    imgContainer.innerHTML = `<img src="${imgUrl}" alt="오늘의 급식 사진" onerror="this.src='https://placehold.co/500x350?text=사진이+아직+등록되지+않았습니다.'">`;
+                if(imgUrl && !imgUrl.includes('no_image')) {
+                    imgContainer.innerHTML = `<img src="${imgUrl}" alt="오늘의 급식 사진" onerror="showNoImgMessage();">`;
                 } else {
-                    // 이미지가 없는 경우 기본 메시지
-                    imgContainer.innerHTML = `<div class="loading">📸 오늘 자 급식 사진이 아직 업로드되지 않았거나 일치하는 이미지가 없습니다.</div>`;
+                    showNoImgMessage();
                 }
 
                 const menuContainer = document.getElementById('menu-container');
@@ -165,13 +172,34 @@
                 menuContainer.style.display = "block";
                 
             } else {
-                document.getElementById('status-text').innerHTML = "<span class='error'>오늘 락된 급식 정보가 없거나,<br>주말/공휴일입니다. 😴</span>";
+                showWeekendMessage();
             }
         })
         .catch(error => {
             console.error(error);
-            document.getElementById('status-text').innerHTML = "<span class='error'>급식 정보를 불러오지 못했습니다.<br>잠시 후 다시 시도해 주세요.</span>";
+            document.getElementById('img-container').innerHTML = `
+                <div class="loading">
+                    <span class="error">학교 서버 연결이 일시적으로 원활하지 않습니다.</span><br><br>
+                    아래 버튼을 누르면 학교 급식 게시판으로 바로 이동합니다.<br>
+                    <a href="${targetUrl}&viewType=sub" class="btn-link" target="_blank">급식 게시판 바로가기</a>
+                </div>`;
         });
+
+    function showNoImgMessage() {
+        document.getElementById('img-container').innerHTML = `
+            <div class="loading">
+                📸 오늘 자 급식 사진이 아직 업로드되지 않았습니다.<br>
+                (식단 메뉴는 아래에서 확인할 수 있습니다.)
+            </div>`;
+    }
+
+    function showWeekendMessage() {
+        document.getElementById('img-container').innerHTML = `
+            <div class="loading">
+                <span class='error'>오늘 등록된 급식 정보가 없습니다.</span><br>
+                주말, 공휴일이거나 방학 기간일 수 있습니다. 😴
+            </div>`;
+    }
 </script>
 
 </body>
