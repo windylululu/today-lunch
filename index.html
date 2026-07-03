@@ -162,7 +162,7 @@
     </div>
 
     <div class="menu-grid">
-        <!-- 1. 오늘의 식단 및 사진 보기 (원터치 통합 기능) -->
+        <!-- 1. 오늘의 식단 및 사진 보기 -->
         <a href="#lunch-section" class="menu-btn" onclick="loadTodayMeal();">
             <span class="icon">🍚</span> 오늘의 급식사진 보기
         </a>
@@ -187,7 +187,6 @@
     <div id="lunch-section" class="section-box">
         <div class="section-title">🍚 오늘의 급식 정보</div>
         
-        <!-- 학부모 편의를 위한 팝업 다이렉트 링크 버튼 -->
         <div class="meal-notice-box">
             📌 학교 정책상 상세 사진은 아래 버튼을 누른 뒤 <br>
             <span style="color:#d32f2f;">[오늘 날짜의 상세보기]</span>를 터치하면 바로 보입니다!
@@ -196,7 +195,7 @@
             📸 오늘의 급식 사진 보러가기 ➔
         </a>
 
-        <!-- 지저분한 깨짐을 완전히 제거한 맑은 텍스트 식단표 -->
+        <!-- 지연 없이 교육청 공식망에서 1초 만에 꽂히는 식단표 -->
         <div class="menu-text-box" id="menu-container">식단 메뉴를 불러오는 중입니다...</div>
         <a href="#" class="btn-close" onclick="document.getElementById('lunch-section').style.display='none';">닫기 ▲</a>
     </div>
@@ -214,18 +213,15 @@
 </div>
 
 <script>
+    // 날짜 계산
     const offset = new Date().getTimezoneOffset() * 60000;
     const today = new Date(Date.now() - offset);
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
-    
-    const todayStr1 = `${year}-${month}-${day}`;
-    const todayStr2 = `${year}.${month}.${day}`;
+    const todayStr = `${year}${month}${day}`;
     
     document.getElementById('today-date').innerText = `${year}년 ${month}월 ${day}일`;
-
-    const targetUrl = "https://samsung-e.goeay.kr/samsung-e/ad/fm/foodmenu/selectFoodMenuView.do?mi=6769";
 
     function toggleSection(id) {
         document.getElementById('lunch-section').style.display = 'none';
@@ -235,55 +231,30 @@
 
     function loadTodayMeal() {
         toggleSection('lunch-section');
-        document.getElementById('menu-container').innerHTML = `<div class="loading">🔄 오늘의 메뉴 명단을 정제하여 가져오는 중...</div>`;
+        document.getElementById('menu-container').innerHTML = `<div class="loading">⚡ 교육청 서버에서 실시간 메뉴를 초고속으로 가져오는 중...</div>`;
         
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&_=${new Date().getTime()}`;
+        // 교육청 오픈 API 정보 (삼성초등학교 유치원 코드 매칭)
+        const neisApiUrl = `https://open.neis.go.kr/api/mealServiceDietInfo?Type=json&pIndex=1&pSize=1&ATPT_OFCDC_SC_CODE=J10&SD_SCHUL_CODE=7551065&MLSV_YMD=${todayStr}`;
 
-        fetch(proxyUrl)
+        fetch(neisApiUrl)
             .then(res => res.json())
             .then(data => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(data.contents, 'text/html');
-                const tds = doc.querySelectorAll('table tbody td');
-                let targetTd = null;
-
-                tds.forEach(td => {
-                    const txt = td.textContent.replace(/\s+/g, '');
-                    if(txt.includes(todayStr1) || txt.includes(todayStr2) || txt.includes(`${parseInt(month)}월${parseInt(day)}일`)) {
-                        targetTd = td;
-                    }
-                });
-
-                if (!targetTd) {
-                    const dayIdx = new Date().getDay();
-                    if (dayIdx >= 1 && dayIdx <= 5) {
-                        const weekTds = doc.querySelectorAll('table tbody td');
-                        if(weekTds.length >= dayIdx) targetTd = weekTds[dayIdx - 1];
-                    }
-                }
-
-                if (targetTd) {
-                    // HTML 태그를 아예 제외하고 순수 텍스트만 추출하여 깨진 아이콘 원천 차단
-                    let rawText = targetTd.textContent;
+                if (data.mealServiceDietInfo && data.mealServiceDietInfo[1] && data.mealServiceDietInfo[1].row) {
+                    let rawMenu = data.mealServiceDietInfo[1].row[0].DDISH_NM;
                     
-                    // 불필요한 시스템 텍스트 및 중복 찌꺼기 글자들 완벽 청소
-                    let cleanText = rawText
-                        .replace(/상세보기/g, '')
-                        .replace(/_이미지/g, '')
-                        .replace(/기본 식단 이미지/g, '')
-                        .replace(/중식/g, '')
+                    // 교육청 특유의 <br/> 태그와 찌꺼기 완벽 정돈
+                    let cleanMenu = rawMenu
+                        .replace(/<br\s*\/?>/gi, '<br>')
+                        .replace(/\*/g, '')
                         .trim();
-                    
-                    // 메뉴 항목별로 줄바꿈 정렬 처리
-                    let formattedMenu = cleanText.split(/\s+/).join('<br> ');
 
-                    document.getElementById('menu-container').innerHTML = `<strong>📋 오늘의 식단 메뉴:</strong><br><div style="margin-top:10px;">${formattedMenu}</div>`;
+                    document.getElementById('menu-container').innerHTML = `<strong>📋 오늘의 식단 메뉴:</strong><br><div style="margin-top:10px; line-height:1.9;">${cleanMenu}</div>`;
                 } else {
                     document.getElementById('menu-container').innerHTML = `😴 오늘은 급식 정보가 없는 날입니다. (주말/공휴일/방학)`;
                 }
             })
             .catch(() => {
-                document.getElementById('menu-container').innerHTML = `⚠️ 실시간 메뉴 텍스트 로드에 지연이 발생했습니다. 상단의 파란색 버튼을 누르면 전체 식단표로 즉시 이동할 수 있습니다.`;
+                document.getElementById('menu-container').innerHTML = `⚠️ 교육청 시스템 점검 중입니다. 상단의 파란색 버튼을 누르시면 학교 홈페이지에서 직접 확인하실 수 있습니다.`;
             });
     }
 </script>
